@@ -7,8 +7,8 @@ There is a plan for the Goodies who have retrieved ethers from The DAO and it's 
 A script has been written to extract The DAO token and ether balances of DTHs just prior to the hard-fork and currently - see [getTheDAOTokenBalance](https://github.com/bokkypoobah/TheDAOETCTokenBalance/blob/master/getTheDAOTokenBalance). 
 
 The script:
-* Extracts all `TheDAO.CreatedToken` events from the creation of The DAO contract in block 1428757 Apr-30-2016 01:42:58 AM +UTC until the end of the creation phase in block 1599205 May-28-2016 08:59:47 AM +UTC
-* Extracts all `TheDAO.Transfer` events from block 1599207 May-28-2016 09:00:07 AM +UTC to the current block
+* Extracts all `TheDAO.CreatedToken` events from the creation of The DAO contract in block 1,428,757 Apr-30-2016 01:42:58 AM +UTC until the end of the creation phase in block 1,599,205 May-28-2016 08:59:47 AM +UTC
+* Extracts all `TheDAO.Transfer` events from block 1,599,207 May-28-2016 09:00:07 AM +UTC to the current block
 * Save a hashmap of the addresses involved in the `TheDAO.CreatedToken` and `TheDAO.Transfer` events
 * Query the blockchain at block 1,919,999 just prior to the hard-fork and currently for all the collected addresses for The DAO token balances and ether balances.
 
