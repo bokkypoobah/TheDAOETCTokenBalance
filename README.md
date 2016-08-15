@@ -8,8 +8,6 @@ A contract providing The DAO ETC Token Balance has been deployed to the ETC chai
 
 At 01:23 15 Aug 2016 UTC, this contract has the attributes Total supply = 11538165987024671407837618, Total accounts = 22092, Sealed = yes. 
 
-The script below will be modified to verify the balances in this contract.
-
 ## The Script
 A script has been written to extract The DAO token and ether balances of DTHs just prior to the hard-fork and currently - see [getTheDAOTokenBalance](https://github.com/bokkypoobah/TheDAOETCTokenBalance/blob/master/getTheDAOTokenBalance). 
 
@@ -19,12 +17,12 @@ The script:
 * Save a hashmap of the addresses involved in the `TheDAO.CreatedToken` and `TheDAO.Transfer` events
 * Query the blockchain at block 1,919,999 just prior to the hard-fork and currently for all the collected addresses for The DAO token balances and ether balances.
 
-I'm just preparing my ETC blockchain to run the script.
+I'm now running the data extraction process.
 
 ## Require Full Blockchain
 Note that to run this script you will need the full ETC blockchain including intermediate states, not the version downloaded using the `geth --fast --oppose-dao-fork`. The reason for this is that the `debug.traceTransaction(...)` call is used to extract the owner in The DAO token creation process as the origin account could be an exchange (proxy) or an account instruction a wallet contract to purchase The DAO tokens.
 
-If you have already downloaded a `--fast` version, you can `geth export chaindatafile`, rename `.ethereum/chaindata` and `geth import chaindatafile` to rebuild the intermediate states.
+If you have already downloaded a `--fast` version, you can `geth export chaindatafile`, rename `.ethereum/chaindata` and `geth import chaindatafile` to rebuild the intermediate states. Note that it may be faster to just re-sync the whole blockchain.
 
 <br />
 
