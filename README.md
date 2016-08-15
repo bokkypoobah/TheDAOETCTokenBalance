@@ -25,3 +25,7 @@ I'm just preparing my ETC blockchain to run the script.
 Note that to run this script you will need the full ETC blockchain, not the version downloaded using the `geth --fast --oppose-dao-fork`. The reason for this is that the `debug.traceTransaction(...)` call is used to extract the owner in The DAO token creation process as the origin account could be an exchange (proxy) or an account instruction a wallet contract to purchase The DAO tokens.
 
 If you have already downloaded a `--fast` version, you can `geth export chaindatafile`, rename `.ethereum/chaindata` and `geth import chaindatafile` to rebuild the intermediate states.
+
+<br />
+
+Enjoy. (c) BokkyPooBah 2016. The MIT licence.
