@@ -8,7 +8,7 @@ There is a plan for the Goodies who have retrieved ethers from The DAO and it's 
 ---
 
 ## Summary
-The script extracts all `CreatedToken` events in [theDAOTokenBalance_20160815_144633UTC_creation.zip](https://github.com/bokkypoobah/TheDAOETCTokenBalance/blob/master/theDAOTokenBalance_20160815_144633UTC_creation.zip) and all `Transfer` events in [theDAOTokenBalance_20160815_144633UTC_transfer.zip](https://github.com/bokkypoobah/TheDAOETCTokenBalance/blob/master/theDAOTokenBalance_20160815_144633UTC_transfer.zip). All addresses involved are stored and The DAO balance is check at block 1,919,999. The balances match the figures in **The DAO ETC Token Balance Contract** listed below, when comparing the differences to 9 decimal places in a spreadsheet - the `PreHardForkDAODiff` column is all 0. And from the summary statistics at the bottom of the _balances text file:
+The script extracts all `CreatedToken` events in [theDAOTokenBalance_20160815_144633UTC_creation.zip](https://github.com/bokkypoobah/TheDAOETCTokenBalance/blob/master/theDAOTokenBalance_20160815_144633UTC_creation.zip) and all `Transfer` events in [theDAOTokenBalance_20160815_144633UTC_transfer.zip](https://github.com/bokkypoobah/TheDAOETCTokenBalance/blob/master/theDAOTokenBalance_20160815_144633UTC_transfer.zip). All addresses involved are stored and the address's The DAO balance is checked at block 1,919,999. The balances match the figures in **The DAO ETC Token Balance Contract** listed below, when comparing the differences to 9 decimal places in a spreadsheet - the `PreHardForkDAODiff` column is all 0. And from the summary statistics at the bottom of the _balances text file:
 
     Stats	nonZeroAccounts	23012
     Stats	daosPreHardForkTotal	1153816598.702436
