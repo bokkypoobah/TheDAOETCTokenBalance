@@ -16,6 +16,10 @@ The script extracts all `CreatedToken` events in [theDAOTokenBalance_20160815_14
 
 The number of non-zero accounts is slightly different to the 22092 figure from **The DAO ETC Token Balance Contract** below, but to 9 decimal places, the total calculated by evaluating each addresss at block 1,919,999 is the same as the total calculated using the data in **The DAO ETC Token Balance Contract** below.
 
+<br />
+
+---
+
 ## The DAO ETC Token Balance Contract
 A contract providing The DAO ETC Token Balance has been deployed to the ETC chain at [0x180826b05452ce96e157f0708c43381fee64a6b8](http://unforked.info/addr/0x180826b05452ce96e157f0708c43381fee64a6b8) by @jbaylina. This contract provides the balance for each DTH account just before the hard-fork block 1,919,999. The ABI for this contract is `[{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"seal","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"totalAccounts","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"data","type":"uint256[]"}],"name":"fill","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"sealed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[],"type":"constructor"}]`. 
 
