@@ -18,7 +18,7 @@ The number of non-zero accounts is slightly different to the 22092 figure from *
 
 ### Note - Slight Difference In Total Supply
 
-**The DAO ETC Token Balance Contract** has a total supply of 11538165987024671407837618 or 1,153,816,598.7024671407837618 DAOs. The sum of my DAO balances for each address totals 1,153,816,598.702436 . There is a difference at the 5 decimal place onwards.
+**The DAO ETC Token Balance Contract** has a total supply of 11538165987024671407837618 or 1,153,816,598.7024671407837618 DAOs. The sum of my DAO balances for each address totals 1,153,816,598.702436 . There is a difference at the 5 decimal place onwards (which I'm not going to worry about). **The DAO ETC Token Balance Contract** is pretty accurate. 
 
 <br />
 
