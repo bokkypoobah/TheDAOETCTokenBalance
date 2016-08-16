@@ -20,7 +20,7 @@ The script:
 I'm now running the data extraction process.
 
 ## Require Full Blockchain
-Note that to run this script you will need the full ETC blockchain including intermediate states, not the version downloaded using the `geth --fast --oppose-dao-fork`. The reason for this is that the `debug.traceTransaction(...)` call is used to extract the owner in The DAO token creation process as the origin account could be an exchange (proxy) or an account instruction a wallet contract to purchase The DAO tokens.
+Note that to run this script you will need the full ETC blockchain including intermediate states, not the version downloaded using the `geth --fast --oppose-dao-fork`. The reason for this is that the `debug.traceTransaction(...)` call is used to extract the owner in The DAO token creation process as the origin account could be an exchange (proxy) or an account instructing a wallet contract to purchase The DAO tokens.
 
 If you have already downloaded a `--fast` version, you can `geth export chaindatafile`, rename `.ethereum/chaindata` and `geth import chaindatafile` to rebuild the intermediate states. Note that it may be faster to just re-sync the whole blockchain.
 
