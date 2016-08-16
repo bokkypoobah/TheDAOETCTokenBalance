@@ -1,0 +1,178 @@
+#!/bin/sh
+# ------------------------------------------------------------------------------
+# Retrieve The DAO Creation and Transfer events, collecting addresses. Then 
+# retrieve the pre-hard-fork balances and the current balances for these 
+# addresses.
+#
+# v2 improvements
+# * Summing totals as BigNumbers instead of floats
+# * Only including non-zero balances at block 1919999 in counter
+#
+# Usage:
+#   1. Download this script to getTheDAOTokenBalance .
+#   2. `chmod 700 getTheDAOTokenBalance`
+#   3. Run `geth console` in a window.
+#   4. Then run this script `./getTheDAOTokenBalance` in a separate window.
+#
+# Enjoy. (c) BokkyPooBah 2016. The MIT licence.
+# ------------------------------------------------------------------------------
+
+DATE=`date -u +%Y%m%d_%H%M%S`
+OUTPUT=theDAOTokenBalance_${DATE}UTC_all.txt
+CREATION=theDAOTokenBalance_${DATE}UTC_creation.txt
+TRANSFER=theDAOTokenBalance_${DATE}UTC_transfer.txt
+BALANCE=theDAOTokenBalance_${DATE}UTC_balance.txt
+
+geth attach << EOF | egrep "^Header|^Data|^Stats|^Footer" > $OUTPUT
+var theDAOABIFragment = [{"constant":true,"inputs":[{"name":"_owner","type":"address"}],"name":"balanceOf","outputs":[{"name":"balance","type":"uint256"}],"type":"function"}, {"anonymous":false,"inputs":[{"indexed":true,"name":"to","type":"address"},{"indexed":false,"name":"amount","type":"uint256"}],"name":"CreatedToken","type":"event"}, {"anonymous":false,"inputs":[{"indexed":true,"name":"_from","type":"address"},{"indexed":true,"name":"_to","type":"address"},{"indexed":false,"name":"_amount","type":"uint256"}],"name":"Transfer","type":"event"}];
+var theDAOAddress = "0xBB9bc244D798123fDe783fCc1C72d3Bb8C189413";
+var theDAO = web3.eth.contract(theDAOABIFragment).at(theDAOAddress);
+
+var theDAOTokenBalancePreHardForkABI = [{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[],"name":"seal","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"totalAccounts","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":true,"inputs":[{"name":"","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"},{"constant":false,"inputs":[{"name":"data","type":"uint256[]"}],"name":"fill","outputs":[],"type":"function"},{"constant":true,"inputs":[],"name":"owner","outputs":[{"name":"","type":"address"}],"type":"function"},{"constant":true,"inputs":[],"name":"sealed","outputs":[{"name":"","type":"bool"}],"type":"function"},{"inputs":[],"type":"constructor"}];
+var theDAOTokenBalancePreHardForkAddress = "0x180826b05452ce96e157f0708c43381fee64a6b8";
+var theDAOTokenBalancePreHardForkContract = web3.eth.contract(theDAOTokenBalancePreHardForkABI).at(theDAOTokenBalancePreHardForkAddress);
+
+// The DAO created in block 1428757 Apr-30-2016 01:42:58 AM +UTC
+var creationStartBlock = 1428757;
+// First The DAO creation event with non-zero extraBalance in block 1520861 May-15-2016 09:00:16 AM +UTC
+var creationWithExtraBalanceStartBlock = 1520861;
+// Last The DAO creation event in block 1599205 May-28-2016 08:59:47 AM +UTC
+var creationEndBlock = 1599205;
+// First The DAO transfer event in block 1599207 May-28-2016 09:00:07 AM +UTC, but use block above
+var transferStartBlock = creationEndBlock + 1;
+// Last The DAO transfer
+var transferEndBlock = eth.blockNumber;
+// Pre hard-fork block
+var preHardForkBlock = 1919999;
+// Hard-fork block
+var hardForkBlock = 1920000;
+
+// Collect addresses
+var addresses = {};
+
+// --- Get creation events ---
+var startBlock = creationStartBlock;
+var endBlock = creationEndBlock;
+
+// Testing
+// startBlock = creationWithExtraBalanceStartBlock - 5;
+// endBlock = creationWithExtraBalanceStartBlock + 5;
+
+var theDAOCreatedTokenEvent = theDAO.CreatedToken({}, {fromBlock: startBlock, toBlock: endBlock});
+console.log("HeaderCreation\tNumber\tFrom\tTokenOwner\tCreatedBy\tBlockNumber\tTxHash\tTimestamp\tGMTDateTime\tAmount\tTheDAOAmount\textraBalanceAmount\tTheDAOTokens\tGasUsed\tGasPrice\tCost\tNonce\tError");
+var i = 0;
+theDAOCreatedTokenEvent.watch(function(error, result) {
+  var tx = eth.getTransaction(result.transactionHash);
+  var txReceipt = eth.getTransactionReceipt(result.transactionHash);
+  var gasUsed = txReceipt.gasUsed;
+  var gasPrice = tx.gasPrice;
+  var cost = gasUsed * gasPrice;
+  var amount = tx.value;
+  var block = eth.getBlock(tx.blockNumber);
+  var d = new Date(block.timestamp * 1000);
+
+  var status = debug.traceTransaction(result.transactionHash);
+  var extraBalanceAmount = 0;
+  var tokenOwner = tx.from;
+  var createdBy = "Owner";
+  var error = "";
+  status.structLogs.forEach(function(e) {
+    if (e.op == "CALL") {
+      var stack = e.stack;
+      extraBalanceAmount = web3.toBigNumber("0x" + stack[stack.length-3]);
+      // baac5300 = createTokenProxy(address) - https://www.4byte.directory/signatures/?bytes4_signature=0xbaac5300
+      if (stack[0].substring(56) == "baac5300") {
+        tokenOwner = "0x" + stack[2].substring(24);
+        createdBy = "Proxy";
+      } else if (stack[0].substring(56) == "b61d27f6") {
+        amount = web3.toBigNumber("0x" + stack[stack.length-3]);
+      } else if (stack[0].substring(56) == "00000966") {
+        if (("0x" + stack[3].substring(24)) != tokenOwner) {
+          tokenOwner = "0x" + stack[3].substring(24);
+          createdBy = "Wallet Contract";
+        }
+      }
+    }
+    if (e.error.length > 0) {
+      error = e.error;
+    }
+  });
+  var theDAOAmount = amount - extraBalanceAmount;
+  var theDAOTokens = theDAOAmount * 100;
+
+  addresses[tx.from] = 1;
+  addresses[tokenOwner] = 1;
+
+  i = i + 1;
+  console.log("DataCreation\t" + i + "\t" + tx.from + "\t" + tokenOwner + "\t" + createdBy + "\t" + tx.blockNumber + "\t" + tx.hash + "\t" +
+    block.timestamp + "\t" + d.toGMTString() + "\t" + web3.fromWei(amount, "ether") + "\t" + 
+    web3.fromWei(theDAOAmount, "ether") + "\t" + web3.fromWei(extraBalanceAmount, "ether") + "\t" + 
+    web3.fromWei(theDAOTokens, "ether") + "\t" + gasUsed + "\t" + gasPrice + "\t" +
+    web3.fromWei(cost, "ether") + "\t" + tx.nonce + "\t" + error);
+});
+
+// --- Get transfer events ---
+var startBlock = transferStartBlock;
+var endBlock = transferEndBlock;
+
+// Testing
+// startBlock = transferStartBlock;
+// endBlock = transferStartBlock + 10;
+
+var theDAOTransferEvent = theDAO.Transfer({}, {fromBlock: startBlock, toBlock: endBlock});
+console.log("HeaderTransfer\tNumber\tAddress\tAmount\tFrom\tTo\tBlockHash\tBlockNumber\tEvent\tLogIndex\tTransactionHash\tTransactionIndex");
+i = 0;
+theDAOTransferEvent.watch(function(error, result) {
+  addresses[result.args._from] = 1;
+  addresses[result.args._to] = 1;
+  i = i + 1;
+  console.log("DataTransfer\t" + i + "\t" + result.address + "\t" + result.args._amount / 1e16 + "\t" + result.args._from + "\t" + 
+    result.args._to + "\t" + result.blockHash + "\t" + result.blockNumber + "\t" + result.event + "\t" + 
+    result.logIndex + "\t" + result.transactionHash + "\t" + result.transactionIndex);
+});
+
+// --- Get balances ---
+var currentBlock = transferEndBlock;
+
+console.log("HeaderBalance\tNumber\tAddress\tPreHardForkDAO\tPreHardForkDAOContract\tPreHardForkDAODiff\tCurrentDAO\tChangeDAO\tPreHardForkETH\tCurrentETH\tChangeETH");
+var daosPreHardForkTotal = 0;
+var daosPreHardForkContractTotal = 0;
+var daosCurrentTotal = 0;
+var nonZeroAccounts = 0;
+i = 0;
+for (var address in addresses) {
+  i = i + 1;
+  var checkAddress = "0xda0031fab25270778386a2dcac0bb934a288c464";
+  var daosPreHardFork = theDAO.balanceOf(address, preHardForkBlock);
+  var daosPreHardForkContract = theDAOTokenBalancePreHardForkContract.balanceOf(address);
+  var daosPreHardForkDiff = daosPreHardFork - daosPreHardForkContract;
+  var daosCurrent = theDAO.balanceOf(address, currentBlock);
+  if (daosPreHardFork != 0 || daosPreHardForkContract != 0) {
+    nonZeroAccounts++;
+  }
+  var daosChange = daosCurrent - daosPreHardFork;
+  var ethsPreHardFork = eth.getBalance(address, preHardForkBlock);
+  var ethsCurrent = eth.getBalance(address, currentBlock);
+  var ethsChange = ethsCurrent - ethsPreHardFork;
+  daosPreHardForkTotal = daosPreHardForkTotal - -daosPreHardFork;
+  daosPreHardForkContractTotal = daosPreHardForkContractTotal - -daosPreHardForkContract;
+  daosCurrentTotal = daosCurrentTotal - -daosCurrent;
+  console.log("DataBalance\t" + i + "\t" + address + "\t" + 
+    (daosPreHardFork/1e16).toFixed(16) + "\t" + (daosPreHardForkContract/1e16).toFixed(16) + "\t" + (daosPreHardForkDiff/1e16).toFixed(16) + "\t" + 
+    (daosCurrent/1e16).toFixed(16) + "\t" + (daosChange/1e16).toFixed(16) + "\t" + 
+    (ethsPreHardFork/1e18).toFixed(18) + "\t" + (ethsCurrent/1e18).toFixed(18) + "\t" + (ethsChange/1e18).toFixed(18));
+}
+
+console.log("Stats\tnonZeroAccounts\t" + nonZeroAccounts);
+console.log("Stats\tdaosPreHardForkTotal\t" + (daosPreHardForkTotal/1e16).toFixed(16));
+console.log("Stats\tdaosPreHardForkContractTotal\t" + (daosPreHardForkContractTotal/1e16).toFixed(16));
+console.log("Stats\tdaosCurrentTotal\t" + (daosCurrentTotal/1e16).toFixed(16));
+
+console.log("Footer\tReport generated at " + (new Date()).toGMTString() + " with latest block number " + transferEndBlock);
+
+EOF
+
+egrep "HeaderCreation|DataCreation|Footer" $OUTPUT > $CREATION
+egrep "HeaderTransfer|DataTransfer|Footer" $OUTPUT > $TRANSFER
+egrep "HeaderBalance|DataBalance|Footer|Stats" $OUTPUT > $BALANCE
+
