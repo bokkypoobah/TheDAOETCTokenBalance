@@ -16,6 +16,10 @@ The script extracts all `CreatedToken` events in [theDAOTokenBalance_20160815_14
 
 The number of non-zero accounts is slightly different to the 22092 figure from **The DAO ETC Token Balance Contract** below, but to 9 decimal places, the total calculated by evaluating each addresss at block 1,919,999 is the same as the total calculated using the data in **The DAO ETC Token Balance Contract** below.
 
+### Note - Slight Difference In Total Supply
+
+**The DAO ETC Token Balance Contract** has a total supply of 11538165987024671407837618 or 1,153,816,598.7024671407837618 DAOs. The sum of my DAO balances for each address totals 1,153,816,598.702436 . There is a difference at the 5 decimal place onwards.
+
 <br />
 
 ---
