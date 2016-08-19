@@ -16,7 +16,7 @@ The script extracts all `CreatedToken` events in [theDAOTokenBalance_20160815_14
     Stats	daosPreHardForkTotal	1153816598.702436
     Stats	daosPreHardForkContractTotal	1153816598.702436
 
-The number of non-zero accounts is slightly different to the 22092 figure from the Goodies' `DAOBalanceSnapShot` contract, but to 9 decimal places, the total calculated by evaluating each addresss at block 1,919,999 is the same as the total calculated using the data in **The DAO ETC Token Balance Contract** below.
+The number of non-zero accounts is slightly different to the 22092 figure from the Goodies' `DAOBalanceSnapShot` contract, but to 9 decimal places, the total calculated by evaluating each addresss at block 1,919,999 is the same as the total calculated using the data in the Goodies' `DAOBalanceSnapShot` contract.
 
 ### Note - Slight Difference In Total Supply
 
