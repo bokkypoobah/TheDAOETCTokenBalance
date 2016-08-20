@@ -4,6 +4,10 @@
 # retrieve the pre-hard-fork balances and the current balances for these 
 # addresses.
 #
+# v2 improvements
+# * Summing totals as BigNumbers instead of floats
+# * Only including non-zero balances at block 1919999 in counter
+#
 # Usage:
 #   1. Download this script to getTheDAOTokenBalance .
 #   2. `chmod 700 getTheDAOTokenBalance`
@@ -55,56 +59,12 @@ var endBlock = creationEndBlock;
 // endBlock = creationWithExtraBalanceStartBlock + 5;
 
 var theDAOCreatedTokenEvent = theDAO.CreatedToken({}, {fromBlock: startBlock, toBlock: endBlock});
-console.log("HeaderCreation\tNumber\tFrom\tTokenOwner\tCreatedBy\tBlockNumber\tTxHash\tTimestamp\tGMTDateTime\tAmount\tTheDAOAmount\textraBalanceAmount\tTheDAOTokens\tGasUsed\tGasPrice\tCost\tNonce\tError");
+console.log("HeaderCreation\tTokenOwner");
 var i = 0;
 theDAOCreatedTokenEvent.watch(function(error, result) {
-  var tx = eth.getTransaction(result.transactionHash);
-  var txReceipt = eth.getTransactionReceipt(result.transactionHash);
-  var gasUsed = txReceipt.gasUsed;
-  var gasPrice = tx.gasPrice;
-  var cost = gasUsed * gasPrice;
-  var amount = tx.value;
-  var block = eth.getBlock(tx.blockNumber);
-  var d = new Date(block.timestamp * 1000);
-
-  var status = debug.traceTransaction(result.transactionHash);
-  var extraBalanceAmount = 0;
-  var tokenOwner = tx.from;
-  var createdBy = "Owner";
-  var error = "";
-  status.structLogs.forEach(function(e) {
-    if (e.op == "CALL") {
-      var stack = e.stack;
-      extraBalanceAmount = web3.toBigNumber("0x" + stack[stack.length-3]);
-      // baac5300 = createTokenProxy(address) - https://www.4byte.directory/signatures/?bytes4_signature=0xbaac5300
-      if (stack[0].substring(56) == "baac5300") {
-        tokenOwner = "0x" + stack[2].substring(24);
-        createdBy = "Proxy";
-      } else if (stack[0].substring(56) == "b61d27f6") {
-        amount = web3.toBigNumber("0x" + stack[stack.length-3]);
-      } else if (stack[0].substring(56) == "00000966") {
-        if (("0x" + stack[3].substring(24)) != tokenOwner) {
-          tokenOwner = "0x" + stack[3].substring(24);
-          createdBy = "Wallet Contract";
-        }
-      }
-    }
-    if (e.error.length > 0) {
-      error = e.error;
-    }
-  });
-  var theDAOAmount = amount - extraBalanceAmount;
-  var theDAOTokens = theDAOAmount * 100;
-
-  addresses[tx.from] = 1;
-  addresses[tokenOwner] = 1;
-
+  addresses[result.args.to] = 1;
   i = i + 1;
-  console.log("DataCreation\t" + i + "\t" + tx.from + "\t" + tokenOwner + "\t" + createdBy + "\t" + tx.blockNumber + "\t" + tx.hash + "\t" +
-    block.timestamp + "\t" + d.toGMTString() + "\t" + web3.fromWei(amount, "ether") + "\t" + 
-    web3.fromWei(theDAOAmount, "ether") + "\t" + web3.fromWei(extraBalanceAmount, "ether") + "\t" + 
-    web3.fromWei(theDAOTokens, "ether") + "\t" + gasUsed + "\t" + gasPrice + "\t" +
-    web3.fromWei(cost, "ether") + "\t" + tx.nonce + "\t" + error);
+  console.log("DataCreation\t" + i + "\t" + result.args.to);
 });
 
 // --- Get transfer events ---
@@ -116,53 +76,51 @@ var endBlock = transferEndBlock;
 // endBlock = transferStartBlock + 10;
 
 var theDAOTransferEvent = theDAO.Transfer({}, {fromBlock: startBlock, toBlock: endBlock});
-console.log("HeaderTransfer\tNumber\tAddress\tAmount\tFrom\tTo\tBlockHash\tBlockNumber\tEvent\tLogIndex\tTransactionHash\tTransactionIndex");
+console.log("HeaderTransfer\tFrom\tTo");
 i = 0;
 theDAOTransferEvent.watch(function(error, result) {
   addresses[result.args._from] = 1;
   addresses[result.args._to] = 1;
   i = i + 1;
-  console.log("DataTransfer\t" + i + "\t" + result.address + "\t" + result.args._amount / 1e16 + "\t" + result.args._from + "\t" + 
-    result.args._to + "\t" + result.blockHash + "\t" + result.blockNumber + "\t" + result.event + "\t" + 
-    result.logIndex + "\t" + result.transactionHash + "\t" + result.transactionIndex);
+  console.log("DataTransfer\t" + i + "\t" + result.args._from + "\t" + result.args._to);
 });
 
 // --- Get balances ---
 var currentBlock = transferEndBlock;
 
 console.log("HeaderBalance\tNumber\tAddress\tPreHardForkDAO\tPreHardForkDAOContract\tPreHardForkDAODiff\tCurrentDAO\tChangeDAO\tPreHardForkETH\tCurrentETH\tChangeETH");
-var daosPreHardForkTotal = 0;
-var daosPreHardForkContractTotal = 0;
-var daosCurrentTotal = 0;
-var nonZeroAccounts = 0;
+var daosPreHardForkTotal = new BigNumber(0);
+var daosPreHardForkContractTotal = new BigNumber(0);
+var daosCurrentTotal = new BigNumber(0);
+var nonZeroAccounts = new BigNumber(0);
 i = 0;
 for (var address in addresses) {
   i = i + 1;
   var checkAddress = "0xda0031fab25270778386a2dcac0bb934a288c464";
-  var daosPreHardFork = theDAO.balanceOf(address, preHardForkBlock)/1e16;
-  var daosPreHardForkContract = theDAOTokenBalancePreHardForkContract.balanceOf(address)/1e16;
+  var daosPreHardFork = theDAO.balanceOf(address, preHardForkBlock);
+  var daosPreHardForkContract = theDAOTokenBalancePreHardForkContract.balanceOf(address);
   var daosPreHardForkDiff = daosPreHardFork - daosPreHardForkContract;
-  var daosCurrent = theDAO.balanceOf(address, currentBlock)/1e16;
-  if (daosPreHardFork > 0 || daosPreHardForkContract > 0 || daosCurrent > 0) {
+  var daosCurrent = theDAO.balanceOf(address, currentBlock);
+  if (daosPreHardFork != 0 || daosPreHardForkContract != 0) {
     nonZeroAccounts++;
   }
   var daosChange = daosCurrent - daosPreHardFork;
-  var ethsPreHardFork = eth.getBalance(address, preHardForkBlock)/1e18;
-  var ethsCurrent = eth.getBalance(address, currentBlock)/1e18;
+  var ethsPreHardFork = eth.getBalance(address, preHardForkBlock);
+  var ethsCurrent = eth.getBalance(address, currentBlock);
   var ethsChange = ethsCurrent - ethsPreHardFork;
-  daosPreHardForkTotal = parseFloat(daosPreHardForkTotal) + parseFloat(daosPreHardFork);
-  daosPreHardForkContractTotal = parseFloat(daosPreHardForkContractTotal) + parseFloat(daosPreHardForkContract);
-  daosCurrentTotal = parseFloat(daosCurrentTotal) + parseFloat(daosCurrent);
+  daosPreHardForkTotal = daosPreHardForkTotal.plus(daosPreHardFork);
+  daosPreHardForkContractTotal = daosPreHardForkContractTotal.plus(daosPreHardForkContract);
+  daosCurrentTotal = daosCurrentTotal.plus(daosCurrent);
   console.log("DataBalance\t" + i + "\t" + address + "\t" + 
-    daosPreHardFork.toFixed(16) + "\t" + daosPreHardForkContract.toFixed(16) + "\t" + daosPreHardForkDiff.toFixed(16) + "\t" + 
-    daosCurrent.toFixed(16) + "\t" + daosChange.toFixed(16) + "\t" + 
-    ethsPreHardFork.toFixed(18) + "\t" + ethsCurrent.toFixed(18) + "\t" + ethsChange.toFixed(18));
+    (daosPreHardFork/1e16).toFixed(16) + "\t" + (daosPreHardForkContract/1e16).toFixed(16) + "\t" + (daosPreHardForkDiff/1e16).toFixed(16) + "\t" + 
+    (daosCurrent/1e16).toFixed(16) + "\t" + (daosChange/1e16).toFixed(16) + "\t" + 
+    (ethsPreHardFork/1e18).toFixed(18) + "\t" + (ethsCurrent/1e18).toFixed(18) + "\t" + (ethsChange/1e18).toFixed(18));
 }
 
 console.log("Stats\tnonZeroAccounts\t" + nonZeroAccounts);
-console.log("Stats\tdaosPreHardForkTotal\t" + daosPreHardForkTotal);
-console.log("Stats\tdaosPreHardForkContractTotal\t" + daosPreHardForkContractTotal);
-console.log("Stats\tdaosCurrentTotal\t" + daosCurrentTotal);
+console.log("Stats\tdaosPreHardForkTotal\t" + daosPreHardForkTotal.toPrecision(30) + "\t" + (daosPreHardForkTotal/1e16).toFixed(16));
+console.log("Stats\tdaosPreHardForkContractTotal\t" + daosPreHardForkContractTotal.toPrecision(30) + "\t" + (daosPreHardForkContractTotal/1e16).toFixed(16));
+console.log("Stats\tdaosCurrentTotal\t" + daosCurrentTotal.toPrecision(30) + "\t" + (daosCurrentTotal/1e16).toFixed(16));
 
 console.log("Footer\tReport generated at " + (new Date()).toGMTString() + " with latest block number " + transferEndBlock);
 
