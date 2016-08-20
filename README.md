@@ -22,6 +22,18 @@ The summary statistics at the bottom of the _balances text file follows:
 
 The number of non-zero accounts and the `daosPreHardForkTotal` matches the 22092 figure and the 11538165987024671407837618 `totalSupply` from the Goodies' `DAOBalanceSnapShot` contract. The Goodies' `DAOBalanceSnapShot` accurately represent the balances of DTH's accounts at the pre-hard-fork block 1,919,999. 
 
+And checking theDAO's `totalSupply()` at pre-hard-fork block 1,919,999 using `geth` confirms the total supply figure.
+
+    > var theDAOABIFragment = [{"constant":true,"inputs":[],"name":"totalSupply","outputs":[{"name":"","type":"uint256"}],"type":"function"}];
+    undefined
+    > var theDAOAddress = "0xbb9bc244d798123fde783fcc1c72d3bb8c189413"
+    undefined
+    > var theDAO = web3.eth.contract(theDAOABIFragment).at(theDAOAddress);
+    undefined
+    > theDAO.totalSupply(1919999).toString(10);
+    "11538165987024671407837618"
+
+
 <br />
 
 ---
